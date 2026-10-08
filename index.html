@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國三美班 學生興趣測驗與性向測驗家長查詢系統</title>
+  <!-- FontAwesome 圖標庫 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js 本地或CDN支援 -->
+  <script src="chart.min.js"></script>
+</head>
+<body>
+
+  <!-- 頂部導航 -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-compass"></i>
+        </div>
+        <div class="brand-text">
+          <h1>國三美班 學生興趣與性向測驗查詢系統</h1>
+          <p>輔導室生涯輔導與適性發展專區 ‧ 陪伴孩子找到人生的光芒</p>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button id="btnNavGuide" class="btn btn-outline-white btn-sm" onclick="app.showGeneralGuide()">
+          <i class="fa-solid fa-book-open"></i> 測驗說明手冊
+        </button>
+        <button id="btnNavReset" class="btn btn-outline-white btn-sm" style="display: none;" onclick="app.resetQuery()">
+          <i class="fa-solid fa-rotate-left"></i> 重新查詢
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 列印專用抬頭 (一般瀏覽時隱藏) -->
+  <div class="print-only-header">
+    <h2 style="font-size: 18pt; margin-bottom: 4px;">國中三年級美班 學生性向與興趣測驗個人化分析報表</h2>
+    <p style="font-size: 10pt; color: #555;">教育部適性輔導政策推動 ‧ 學校輔導室製作 ‧ 產生日照：2026年10月</p>
+    <hr style="margin: 10px 0; border: 0.5px solid #aaa;">
+  </div>
+
+  <main class="main-wrapper">
+
+    <!-- 1. 家長查詢登入區塊 -->
+    <section id="querySection" class="login-hero">
+      <div class="login-card">
+        <div class="login-header">
+          <span class="login-badge"><i class="fa-solid fa-shield-halved"></i> 學生個人化隱私查詢</span>
+          <h2>家長查詢專區</h2>
+          <p>請輸入學生的「座號」與「身分證字號末3碼」進行驗證查詢</p>
+        </div>
+        <div class="login-body">
+          <div id="loginAlert" class="alert alert-danger" style="display: none;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="loginAlertMsg">座號或身分證字號末3碼不符，請重新確認！</span>
+          </div>
+
+          <form id="queryForm" onsubmit="app.handleLogin(event)">
+            <div class="form-group">
+              <label class="form-label" for="seatInput">
+                <i class="fa-solid fa-hashtag text-primary"></i> 學生座號
+              </label>
+              <input type="number" id="seatInput" class="form-control" placeholder="請輸入座號（例如：1 或 20）" min="1" max="50" required autofocus>
+              <div class="form-hint">國三美班學生座號範圍為 1 至 47</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="idInput">
+                <i class="fa-solid fa-id-card text-primary"></i> 學生身分證字號末3碼
+              </label>
+              <input type="text" id="idInput" class="form-control" placeholder="請輸入身分證末3碼（例如：428）" maxlength="10" required>
+              <div class="form-hint">輸入身分證最後3碼數字即可（例如：428，亦支援輸入完整10碼）</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1.05rem;">
+              <i class="fa-solid fa-magnifying-glass"></i> 查詢測驗結果
+            </button>
+          </form>
+
+          <!-- 快速示範體驗 -->
+          <div class="demo-box">
+            <div class="demo-title">
+              <i class="fa-solid fa-wand-magic-sparkles text-primary"></i>
+              測試帳號快捷填入（點擊自動帶入）：
+            </div>
+            <div class="demo-chips">
+              <button class="chip-btn" onclick="app.quickFill(1, '428')">1號 呂亞璇 (末3碼: 428)</button>
+              <button class="chip-btn" onclick="app.quickFill(20, '502')">20號 王鈞奎 (末3碼: 502)</button>
+              <button class="chip-btn" onclick="app.quickFill(29, '085')">29號 陳永壕 (末3碼: 085)</button>
+              <button class="chip-btn" onclick="app.quickFill(34, '521')">34號 陳暐杰 (末3碼: 521)</button>
+              <button class="chip-btn" onclick="app.quickFill(47, '512')">47號 劉玟齊 (末3碼: 512)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 學生個人測驗結果報告區 (查詢成功後顯示) -->
+    <section id="reportSection" style="display: none;">
+
+      <!-- 學生資料名片卡 -->
+      <div class="student-header-card">
+        <div class="student-meta">
+          <div class="student-avatar" id="studentAvatar">呂</div>
+          <div class="student-name-group">
+            <h2 id="studentName">呂亞璇 同學</h2>
+            <div class="student-badges">
+              <span class="student-badge-item"><i class="fa-solid fa-school"></i> 班級：<b id="studentClass">國三美</b></span>
+              <span class="student-badge-item"><i class="fa-solid fa-hashtag"></i> 座號：<b id="studentSeat">1</b> 號</span>
+              <span class="student-badge-item"><i class="fa-solid fa-id-badge"></i> 學號：<b id="studentNo">113047</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="student-header-actions">
+          <button class="btn btn-outline-white" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> 列印 / 存為PDF
+          </button>
+          <button class="btn btn-outline-white" onclick="app.resetQuery()">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> 登出查詢
+          </button>
+        </div>
+      </div>
+
+      <!-- 需關懷提醒橫幅 (若學生有註記) -->
+      <div id="careAlertBanner" class="care-alert-card" style="display: none;">
+        <div class="care-icon">
+          <i class="fa-solid fa-heart-pulse"></i>
+        </div>
+        <div class="care-text">
+          <h4>輔導室關懷貼心提醒：</h4>
+          <p>測驗紀錄顯示孩子在本次興趣量表填答較為保守或分數落差較不明顯（目前興趣分化程度尚在摸索期）。請家長放心，這常代表孩子尚未接觸到足夠多元的生活情境或多元職業體驗。鼓勵家長多帶孩子參訪職業博覽會、鼓勵參與社團、或至學校輔導室預約進行一對一深度生涯晤談探索！</p>
+        </div>
+      </div>
+
+      <!-- 分頁標籤導覽 (Tabs) -->
+      <nav class="nav-tabs no-print">
+        <button class="tab-btn active" onclick="app.switchTab('tab-overview', this)">
+          <i class="fa-solid fa-chart-pie"></i> 綜合落點與圖表對照
+        </button>
+        <button class="tab-btn" onclick="app.switchTab('tab-aptitude', this)">
+          <i class="fa-solid fa-brain"></i> 性向測驗能力報告 (8大向度)
+        </button>
+        <button class="tab-btn" onclick="app.switchTab('tab-interest', this)">
+          <i class="fa-solid fa-compass"></i> 興趣測驗特質分析 (Holland)
+        </button>
+        <button class="tab-btn" onclick="app.switchTab('tab-clusters', this)">
+          <i class="fa-solid fa-layer-group"></i> 15群科與普通高中導覽
+        </button>
+        <button class="tab-btn" onclick="app.switchTab('tab-guide', this)">
+          <i class="fa-solid fa-book-open-reader"></i> 家長陪伴指南與問答
+        </button>
+      </nav>
+
+      <!-- TAB 1: 綜合落點與圖表對照 -->
+      <div id="tab-overview" class="tab-pane">
+        
+        <!-- 契合矩陣 (事半功倍群類 vs 性向 vs 興趣) -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-crosshairs text-primary"></i> 核心落點交叉分析：性向潛能 vs 興趣熱忱
+            </div>
+            <span style="font-size: 0.82rem; color: var(--gray-500);">
+              依據國二性向測驗與國三興趣測驗大數據綜合比對
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="matrix-container" id="matrixContainer">
+              <!-- 動態生成黃金重疊群類、性向優勢群類、興趣偏好群類 -->
+            </div>
+            <div class="alert alert-info" style="margin-bottom: 0;">
+              <i class="fa-solid fa-lightbulb"></i>
+              <div>
+                <b>輔導室解讀心法：</b>性向是「能不能做、學得快不快（天賦潛在能力）」，興趣是「喜不喜歡、願不願意長久投入（內在熱情）」。<br>
+                兩者相符時，發展如同順水推舟、<strong>事半功倍</strong>；若暫時不一致，亦無需擔憂，國中為多方探索之黃金時期，多方體驗能更清楚定位方向！
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 雙圖表區塊 (性向PR圖 + 興趣六角圖) -->
+        <div class="charts-grid">
+          <!-- 性向PR直條圖 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-chart-column" style="color: #2563eb;"></i> 性向測驗：八大能力百分等級 (PR值)
+              </div>
+              <span class="pr-pill pr-strong">PR 75以上為頂尖優勢</span>
+            </div>
+            <div class="card-body">
+              <div class="chart-card-body">
+                <canvas id="aptitudeChart"></canvas>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--gray-500); text-align: center; margin-top: 0.5rem;">
+                * PR值代表在全國同齡常模中的百分比（如PR 89表示勝過89%的國中學生）
+              </p>
+            </div>
+          </div>
+
+          <!-- 興趣Holland雷達圖 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-hexagon-nodes" style="color: #7c3aed;"></i> 興趣測驗：Holland 六大興趣光譜
+              </div>
+              <span id="hollandCodeBadge" class="pr-pill pr-mid">代碼：---</span>
+            </div>
+            <div class="card-body">
+              <div class="chart-card-body">
+                <canvas id="interestChart"></canvas>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--gray-500); text-align: center; margin-top: 0.5rem;">
+                * 實用型(R)、研究型(I)、藝術型(A)、社會型(S)、企業型(E)、事務型(C)
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: 性向測驗能力報告 -->
+      <div id="tab-aptitude" class="tab-pane" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-brain text-primary"></i> 性向測驗 8 大分測驗完整成績與能力解析
+            </div>
+            <span style="font-size: 0.85rem; color: var(--gray-600);">
+              性向指個人天賦之潛在學習能力（於國二下學期施測）
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="abilities-grid" id="aptitudeCardsContainer">
+              <!-- 動態生成 8 大能力卡片 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 性向推薦群類詳細卡 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-award" style="color: #2563eb;"></i> 性向測驗推薦之適性發展群類
+            </div>
+          </div>
+          <div class="card-body">
+            <p style="margin-bottom: 0.75rem; color: var(--gray-700);">
+              依據孩子在8個分測驗的能力綜合運算，孩子具備較高學習效率與表現潛能的類群如下：
+            </p>
+            <div class="match-tags" id="aptitudeRecTags"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: 興趣測驗特質分析 -->
+      <div id="tab-interest" class="tab-pane" style="display: none;">
+        
+        <!-- Holland 代碼摘要 -->
+        <div class="holland-summary-card">
+          <div>
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem;">
+              孩子的 Holland 興趣類型代碼：<span id="hollandTopCodes" style="color: var(--primary);"></span>
+            </h3>
+            <p style="font-size: 0.88rem; color: var(--gray-600);" id="hollandSummaryDesc">
+              依據分數最高之三種類型排列，反映孩子在學習、生活與職業中最具吸引力之活動型態。
+            </p>
+          </div>
+          <div class="holland-code-badge" id="hollandCodeBadgesContainer">
+            <!-- 動態生成 R/I/A/S/E/C 方塊 -->
+          </div>
+        </div>
+
+        <!-- 6大類型卡片列表 -->
+        <div class="holland-cards-grid" id="hollandCardsContainer">
+          <!-- 動態生成 6 大類型卡片 -->
+        </div>
+
+        <!-- 興趣推薦群類 -->
+        <div class="card" style="margin-top: 1.5rem;">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-compass" style="color: #ea580c;"></i> 興趣測驗推薦之適性發展群類
+            </div>
+          </div>
+          <div class="card-body">
+            <p style="margin-bottom: 0.75rem; color: var(--gray-700);">
+              代表孩子主觀上最感興趣、最渴望投入時間精力探索的學程或職群方向：
+            </p>
+            <div class="match-tags" id="interestRecTags"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 4: 15群科與普通高中導覽 -->
+      <div id="tab-clusters" class="tab-pane" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-graduation-cap text-primary"></i> 高職 15 群科與普通高中 完整導覽檢索
+            </div>
+            <span style="font-size: 0.85rem; color: var(--gray-500);">
+              綠色標章標示為符合孩子測驗推薦之群類
+            </span>
+          </div>
+          <div class="card-body">
+            <!-- 搜尋與過濾 -->
+            <div class="cluster-search-box">
+              <input type="text" id="clusterSearchInput" class="cluster-search-input" placeholder="🔍 搜尋科別或群類關鍵字（如：資訊、外語、汽車、餐飲、設計...）" oninput="app.filterClusters()">
+            </div>
+            <div class="cluster-filter-pills" id="clusterFilterPills">
+              <button class="filter-pill active" onclick="app.setClusterCategory('ALL', this)">全部 (16)</button>
+              <button class="filter-pill" onclick="app.setClusterCategory('RECOMMENDED', this)">⭐ 孩子推薦群類</button>
+              <button class="filter-pill" onclick="app.setClusterCategory('技術與製造類', this)">技術製造</button>
+              <button class="filter-pill" onclick="app.setClusterCategory('商管與服務類', this)">商管服務</button>
+              <button class="filter-pill" onclick="app.setClusterCategory('創意與視覺類', this)">創意設計</button>
+              <button class="filter-pill" onclick="app.setClusterCategory('學術深造類', this)">普通高中</button>
+            </div>
+
+            <!-- 群科卡片清單 -->
+            <div class="cluster-grid" id="clusterGridContainer">
+              <!-- 動態生成群科卡片 -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: 家長陪伴指南與問答 -->
+      <div id="tab-guide" class="tab-pane" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-hands-holding-child text-primary"></i> 家長陪跑指南：如何陪伴國三孩子面對生涯抉擇？
+            </div>
+          </div>
+          <div class="card-body">
+            
+            <div class="faq-item">
+              <div class="faq-question" onclick="app.toggleFaq(this)">
+                <span>Q1. 什麼是百分等級 (PR 值)？分數高低代表什麼？</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+              <div class="faq-answer">
+                PR 值（百分等級）代表在同年齡的學生常模群體中，孩子的成績超越了多少百分比的受試者。<br>
+                ‧ <b>PR 75 以上</b>：代表優於 75% 的同齡孩子，屬於該項能力的「強勢潛能」，學習此類知識時通常吸收快、領悟力強。<br>
+                ‧ <b>PR 25 ~ 74</b>：代表落在「平均發展水準」，大部分學生均在此區間，只要持之以恆均能穩定發展。<br>
+                ‧ <b>PR 25 以下</b>：代表該項潛能目前「較少被開發或運用」，不代表未來無法進步，可透過後天刻意練習建立基礎信心。
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <div class="faq-question" onclick="app.toggleFaq(this)">
+                <span>Q2. 孩子的「性向」與「興趣」測驗結果不一樣，該怎麼辦？</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+              <div class="faq-answer">
+                這在國中階段是<b>非常普遍且正常</b>的現象！<br>
+                ‧ <b>性向</b>是「能力（學得快不快）」；<b>興趣</b>是「熱情（喜不喜歡、想不想做）」。<br>
+                ‧ <b>相符時（事半功倍）</b>：如果性向與興趣皆推薦同一群類，可列為升學的首選優先考慮。<br>
+                ‧ <b>有能力但沒興趣（性向高、興趣低）</b>：孩子資質很好，但可能因為「尚未接觸該生活情境」或「缺乏引發成就感的經驗」。建議多帶孩子參訪實際工作環境、參觀技術院校實習工場，常常能點燃孩子的學習好奇心！<br>
+                ‧ <b>有興趣但能力稍弱（興趣高、性向普通）</b>：強烈的內在熱忱往往是堅持到底的最大動力！若孩子真的很喜歡，只要付出更多練習與良好學習策略，依然能夠在專業領域中發光發熱。
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <div class="faq-question" onclick="app.toggleFaq(this)">
+                <span>Q3. 該選擇「普通高中」還是「技術型高中（高職）」？</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+              <div class="faq-answer">
+                ‧ <b>選擇普通高中</b>：適合學科（國、英、數、社、自）基礎較好、喜愛抽象概念與理論探索、對特定職業專長尚未有明確偏好，希望再多探索三年後升讀一般大學的孩子。<br>
+                ‧ <b>選擇高職（專業技術型高中）</b>：適合動手實作動機強、不喜歡純紙筆理論背誦、對於特定職群（如資訊、餐飲、商業、電機、設計等）已有明顯喜好的孩子。高職亦可透過科技校院繁星計畫或統測升讀頂尖科技大學。
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <div class="faq-question" onclick="app.toggleFaq(this)">
+                <span>Q4. 輔導室對家長的三大建議：傾聽、陪伴、不設限</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+              <div class="faq-answer">
+                1. <b>不將測驗當作「終身標籤」</b>：測驗只是一面鏡子，反映現階段的傾向，孩子的潛能會隨著年齡與閱歷持續成長。<br>
+                2. <b>避免以成人的就業焦慮加諸孩子</b>：尊重孩子的獨特性，協助孩子找到能發揮其長處的舞台，而非只看單一熱門科系。<br>
+                3. <b>預約個別晤談</b>：若您或孩子對升學進路有疑問，歡迎隨時向學校輔導室預約生涯輔導諮詢！
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- 頁尾 -->
+  <footer class="footer">
+    <div style="max-width: 800px; margin: 0 auto;">
+      <p style="font-weight: 700; margin-bottom: 0.4rem;">國三美班 學生生涯適性發展與測驗查詢專區</p>
+      <p style="font-size: 0.8rem; color: var(--gray-500);">
+        資料來源：國中二年級性向測驗常模分析報告 ＆ 國中三年級適性興趣測驗分析報告<br>
+        輔導諮詢電話：(學校總機) 轉 輔導室 ‧ 歡迎家長蒞校預約深度諮詢
+      </p>
+    </div>
+  </footer>
+
+  <!-- 引入資料檔案與主程式腳本 -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

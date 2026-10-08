@@ -1,0 +1,7 @@
+# 敏感原始資料與圖片 (嚴格排除以保護個資)
+帳號密碼.txt
+*.jpg
+students_data.json
+build_data.py
+encrypt_data.js
+*.bat
