@@ -79,21 +79,6 @@
               <i class="fa-solid fa-magnifying-glass"></i> 查詢測驗結果
             </button>
           </form>
-
-          <!-- 快速示範體驗 -->
-          <div class="demo-box">
-            <div class="demo-title">
-              <i class="fa-solid fa-wand-magic-sparkles text-primary"></i>
-              測試帳號快捷填入（點擊自動帶入）：
-            </div>
-            <div class="demo-chips">
-              <button class="chip-btn" onclick="app.quickFill(1, '428')">1號 呂亞璇 (末3碼: 428)</button>
-              <button class="chip-btn" onclick="app.quickFill(20, '502')">20號 王鈞奎 (末3碼: 502)</button>
-              <button class="chip-btn" onclick="app.quickFill(29, '085')">29號 陳永壕 (末3碼: 085)</button>
-              <button class="chip-btn" onclick="app.quickFill(34, '521')">34號 陳暐杰 (末3碼: 521)</button>
-              <button class="chip-btn" onclick="app.quickFill(47, '512')">47號 劉玟齊 (末3碼: 512)</button>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -102,7 +87,7 @@
     <section id="reportSection" style="display: none;">
 
       <!-- 學生資料名片卡 -->
-      <div class="student-header-card">
+      <div id="studentHeaderCard" class="student-header-card">
         <div class="student-meta">
           <div class="student-avatar" id="studentAvatar">呂</div>
           <div class="student-name-group">

@@ -100,6 +100,10 @@ const app = {
     document.getElementById('querySection').style.display = 'none';
     document.getElementById('reportSection').style.display = 'block';
     document.getElementById('btnNavReset').style.display = 'inline-flex';
+    document.getElementById('studentHeaderCard').style.display = 'flex';
+    document.querySelectorAll('.nav-tabs .tab-btn').forEach(btn => {
+      btn.style.display = 'inline-flex';
+    });
 
     // 捲動至頂部
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -625,6 +629,10 @@ const app = {
     document.getElementById('loginAlert').style.display = 'none';
     document.getElementById('seatInput').value = '';
     document.getElementById('idInput').value = '';
+    document.getElementById('studentHeaderCard').style.display = 'flex';
+    document.querySelectorAll('.nav-tabs .tab-btn').forEach(btn => {
+      btn.style.display = 'inline-flex';
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
@@ -639,14 +647,28 @@ const app = {
         this.switchTab('tab-guide', guideBtn);
       }
     } else {
-      // 若未登入，隨機預設填入1號學生並導向手冊
-      this.quickFill(1, '428');
-      setTimeout(() => {
-        const guideBtn = document.querySelectorAll('.nav-tabs .tab-btn')[4];
-        if (guideBtn) {
-          this.switchTab('tab-guide', guideBtn);
+      // 若尚未登入，開啟公開說明手冊檢視
+      document.getElementById('querySection').style.display = 'none';
+      document.getElementById('reportSection').style.display = 'block';
+      document.getElementById('btnNavReset').style.display = 'inline-flex';
+      document.getElementById('studentHeaderCard').style.display = 'none';
+      document.getElementById('careAlertBanner').style.display = 'none';
+
+      // 僅顯示公開的「15群科導覽」與「家長指南」分頁
+      document.querySelectorAll('.nav-tabs .tab-btn').forEach((btn, idx) => {
+        if (idx < 3) {
+          btn.style.display = 'none';
+        } else {
+          btn.style.display = 'inline-flex';
         }
-      }, 100);
+      });
+
+      const guideBtn = document.querySelectorAll('.nav-tabs .tab-btn')[4];
+      if (guideBtn) {
+        this.switchTab('tab-guide', guideBtn);
+      }
+      this.renderClusters();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 };
